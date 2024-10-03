@@ -25,16 +25,18 @@ This project evaluates two sample applications written in Java(JDK 17) with Spri
 
 ### Building and running the applications
 
-1. Go into the application directory and run the following command.
+1. Update the configurations in the relevant `application.properties` file.
+
+2. Go into the application directory and run the following command.
 
 ```sh
     ./mvnw spring-boot:build-image
 ```
 
-2. Run the docker container.
+3. Run the docker container.
 
 ```sh
-    docker run --network host -e BALLERINA_MAX_POOL_SIZE=20 --cpus="2" --memory="8g" -d sample/redshift-jdbc-demo:0.0.1-SNAPSHOT
+    docker run --network host --cpus="2" --memory="8g" -d <docker-image>
 ```
 
 **Note**
