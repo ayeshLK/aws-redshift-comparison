@@ -5,7 +5,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -30,6 +32,11 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public Mono<List<User>> listUsers() {
-        return Mono.fromCallable(this.userRepository::listUsers);
+        return Flux.range(1, 20)
+                .parallel()
+                .runOn(Schedulers.boundedElastic())
+                .flatMap(e -> Flux.fromIterable(this.userRepository.listUsers()))
+                .sequential()
+                .collectList();
     }
 }
