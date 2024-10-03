@@ -23,6 +23,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>redshiftdata</artifactId>
+			<version>2.28.14</version>
+		</dependency>
 	</dependencies>
 
 	<build>
