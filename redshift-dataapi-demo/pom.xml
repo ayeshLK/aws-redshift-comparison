@@ -38,7 +38,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<image>
-						<name>example/redshift-dataapi-demo:${project.version}</name>
+						<name>sample/redshift-dataapi-demo:${project.version}</name>
 					</image>
 				</configuration>
 			</plugin>

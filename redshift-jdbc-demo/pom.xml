@@ -44,7 +44,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<image>
-						<name>example/redshift-jdbc-demo:${project.version}</name>
+						<name>sample/redshift-jdbc-demo:${project.version}</name>
 					</image>
 				</configuration>
 			</plugin>
