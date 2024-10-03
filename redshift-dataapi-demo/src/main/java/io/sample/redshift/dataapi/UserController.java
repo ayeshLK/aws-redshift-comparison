@@ -33,7 +33,7 @@ public class UserController {
     )
     public Mono<List<User>> listUsers() {
         return Flux.range(1, 20)
-                .parallel()
+                .parallel(20)
                 .runOn(Schedulers.boundedElastic())
                 .flatMap(e -> Flux.fromIterable(this.userRepository.listUsers()))
                 .sequential()
