@@ -33,5 +33,5 @@ build/
 .vscode/
 
 ### Spring-Boot properties
-*.properties
+application.properties
 
