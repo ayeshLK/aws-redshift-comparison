@@ -36,7 +36,7 @@ This project evaluates two sample applications written in Java(JDK 17) with Spri
 3. Run the docker container.
 
 ```sh
-    docker run --network host --cpus="2" --memory="8g" -d <docker-image>
+    docker run -p 9080:8080 --cpus="2" --memory="8g" -d <docker-image>
 ```
 
 **Note**
@@ -49,5 +49,5 @@ Following are the docker images for respective applications:
 Execute the Jmeter script located in `jmeter` directory using following command.
 
 ```sh
-    jmeter -n -t jmeter/aws-redshift-tests.jmx -l results/result.jtl -Jusers="<number-of-concurrent-users>" -Jduration=<duration-in-seconds>
+    jmeter -n -t jmeter/aws-redshift-tests.jmx -l results/result.jtl -Jusers="<number-of-concurrent-users>" -Jduration=<duration-in-seconds> -Jport=9080
 ```
