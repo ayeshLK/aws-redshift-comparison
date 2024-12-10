@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.redshiftdata.RedshiftDataAsyncClient;
 import software.amazon.awssdk.services.redshiftdata.RedshiftDataClient;
 
 @Configuration
@@ -19,12 +20,13 @@ public class Configurations {
 
 
     @Bean
-    public RedshiftDataClient getDataClient() {
+    public RedshiftDataAsyncClient getDataClient() {
         AwsBasicCredentials credentials = AwsBasicCredentials.builder()
                 .accessKeyId(accessKey)
                 .secretAccessKey(secretKey)
                 .build();
-        return RedshiftDataClient.builder()
+
+        return RedshiftDataAsyncClient.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .build();

@@ -4,16 +4,18 @@ import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-import software.amazon.awssdk.services.redshiftdata.RedshiftDataClient;
+import software.amazon.awssdk.services.redshiftdata.RedshiftDataAsyncClient;
 import software.amazon.awssdk.services.redshiftdata.model.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Repository
 public class RedshiftDataUserRepository implements UserRepository {
-    private final RedshiftDataClient dataClient;
+    private final RedshiftDataAsyncClient dataClient;
 
     @Value("${redshift.clusterId}")
     private String clusterId;
@@ -23,7 +25,7 @@ public class RedshiftDataUserRepository implements UserRepository {
     private String databaseUser;
 
     @Autowired
-    public RedshiftDataUserRepository(RedshiftDataClient dataClient) {
+    public RedshiftDataUserRepository(RedshiftDataAsyncClient dataClient) {
         this.dataClient = dataClient;
     }
 
@@ -40,32 +42,39 @@ public class RedshiftDataUserRepository implements UserRepository {
                 .dbUser(databaseUser)
                 .sqls("CALL create_temp_user_data();", "SELECT * FROM temp_user_data LIMIT 100;")
                 .build();
-        BatchExecuteStatementResponse batchExecResp = this.dataClient.batchExecuteStatement(batchExecRequest);
 
-        DescribeStatementRequest describeStmReq = DescribeStatementRequest.builder().id(batchExecResp.id()).build();
-        boolean isCompleted = false;
-        DescribeStatementResponse describeStmResp = null;
-        while (!isCompleted) {
-            describeStmResp = this.dataClient.describeStatement(describeStmReq);
-
-            if (StatusString.FINISHED.equals(describeStmResp.status())) {
-                isCompleted = true;
-            } else if (StatusString.FAILED.equals(describeStmResp.status())) {
-                throw new RuntimeException("Failed to retrieve results for the batch-execute, hence aborting");
-            }
-        }
-
-        Optional<SubStatementData> queryWithResultSet = describeStmResp.subStatements().stream()
-                .filter(SubStatementData::hasResultSet)
-                .findFirst();
-        if (queryWithResultSet.isEmpty()) {
+        GetStatementResultResponse statementResult = this.dataClient.batchExecuteStatement(batchExecRequest)
+                .thenCompose(response -> pollForStatus(DescribeStatementRequest.builder().id(response.id()).build()))
+                .thenCompose(response -> {
+                    Optional<SubStatementData> queryWithResult = response.subStatements().stream()
+                            .filter(SubStatementData::hasResultSet).findFirst();
+                    if (queryWithResult.isEmpty()) {
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    String resultSetId = queryWithResult.get().id();
+                    GetStatementResultRequest request = GetStatementResultRequest.builder().id(resultSetId).build();
+                    return this.dataClient.getStatementResult(request);
+                }).join();
+        if (Objects.isNull(statementResult)) {
             return Collections.emptyList();
         }
+        return statementResult.records().stream().map(this::constructUserDetails).toList();
+    }
 
-        GetStatementResultRequest getStmReq = GetStatementResultRequest.builder()
-                .id(queryWithResultSet.get().id()).build();
-        GetStatementResultResponse results = this.dataClient.getStatementResult(getStmReq);
-        return results.records().stream().map(this::constructUserDetails).toList();
+    private CompletableFuture<DescribeStatementResponse> pollForStatus(DescribeStatementRequest request) {
+        return this.dataClient.describeStatement(request)
+                .thenCompose(response -> {
+                    StatusString status = response.status();
+                    if (StatusString.FINISHED.equals(status)) {
+                        return CompletableFuture.completedFuture(response);
+                    }
+                    if (StatusString.FAILED.equals(status)) {
+                        return CompletableFuture.failedFuture(
+                                new RuntimeException(
+                                        "Failed to retrieve results for the batch-execute, hence aborting"));
+                    }
+                    return pollForStatus(request);
+                });
     }
 
     private User constructUserDetails(List<Field> row) {
