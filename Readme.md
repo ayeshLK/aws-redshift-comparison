@@ -22,6 +22,7 @@ This project evaluates two sample applications written in Java(JDK 17) with Spri
 
 1. `redshift-jdbc-demo`: application using JDBC API
 2. `redshift-dataapi-demo`: application using Data API
+3. `redshift-dataapiasync-demo`: application using Data API with Async client
 
 ### Building and running the applications
 
@@ -43,6 +44,7 @@ This project evaluates two sample applications written in Java(JDK 17) with Spri
 Following are the docker images for respective applications:
 - redshift-jdbc-demo : `sample/redshift-jdbc-demo:0.0.1-SNAPSHOT`
 - redshift-dataapi-demo : `sample/redshift-dataapi-demo:0.0.1-SNAPSHOT`
+- redshift-dataapiasync-demo : `sample/redshift-dataapiasync-demo:0.0.1-SNAPSHOT`
 
 ## Running the test
 
